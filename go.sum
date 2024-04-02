@@ -1,0 +1,8 @@
+github.com/choleraehyq/gofunctools v0.0.0-20170311135431-c5e9260901e5 h1:6rlfgPWQuP2E6Jvk+1EGHGiZQpPGIoy31t+bYSt79kc=
+github.com/choleraehyq/gofunctools v0.0.0-20170311135431-c5e9260901e5/go.mod h1:2dK9uKQAocMGPze9BcZ4N4UA7OkXUFa/+KQrTiQ4nsc=
+github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
+github.com/deckarep/golang-set v1.8.0/go.mod h1:5nI87KwE7wgsBU1F4GKAw2Qod7p5kyS383rP6+o6qqo=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/pspaces/gospace v0.0.0-20180429192141-d2861cf77494 h1:Anm7GPsd7dALlILJqFnpDueXPgsk2iIl2rdK9SOSUrM=
+github.com/pspaces/gospace v0.0.0-20180429192141-d2861cf77494/go.mod h1:mtbCbvt0gOBQtmDYX558lIPMQ5EpVKGBwW4rnVe7Zcg=
