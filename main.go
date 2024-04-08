@@ -18,8 +18,6 @@ func main() {
 
 	wg.Add(1)
 
-	global.SendToConn("Initilisation system !")
-
 	go log.Fatal(http.ListenAndServe(":8081", nil))
 
 	wg.Wait()

@@ -1,10 +1,12 @@
 package global
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -43,10 +45,24 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
+		type SM struct {
+			Message    string
+			IdPorte    int
+			IdBatiment int
+			IdBadge    int
+		}
+		var variable SM
+		err = json.Unmarshal(p, &variable)
+		if err != nil {
+			print("error")
+		}
 
 		//si on recois un message de type badge lu on lance une entry
-		//!\ faire la v"érification qu'il n'y a pas d'entry en cours pour cette porte !
-		
+		if strings.Contains(variable.Message, "Badge Lu") {
+			//!\ faire la vérification qu'il n'y a pas d'entry en cours pour cette porte !
+			go entry(variable.IdPorte, variable.IdBatiment, variable.IdBadge)
+		}
+
 		log.Printf("Received message: %s", p)
 
 		if err := conn.WriteMessage(messageType, p); err != nil {
