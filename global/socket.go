@@ -60,13 +60,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				print("error")
 			}
-			println("laser detected")
 			ts.Put(variable.Message, variable.IdBatiment, variable.IdPorte)
 		}
 		//si on recois un message de type badge lu on lance une entry
 		if strings.Contains(string(p), "Badge Lu") {
 			type SM struct {
 				Message    string
+				IsInside   bool
 				IdPorte    int
 				IdBatiment int
 				IdBadge    int
@@ -78,7 +78,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				print("error")
 			}
 			//!\ faire la vérification qu'il n'y a pas d'entry en cours pour cette porte !
-			go entry(variable.IdPorte, variable.IdBatiment, variable.IdBadge, &ts)
+			go entry(variable.IdPorte, variable.IdBatiment, variable.IdBadge, variable.IsInside, &ts)
 		}
 
 		log.Printf("Received message: %s", p)

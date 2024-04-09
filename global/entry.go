@@ -23,7 +23,7 @@ import . "github.com/pspaces/gospace"
 //on lance la function sensor qui va nous dire ecrire dans l'espace tuple. entry écoute, et si + de deux recu, alarme immédiate (si alarme, on ecrit dans espace tuple pour fermer la porte et on ferme l'entry et on enregistre l'incident)
 //quand la porte est refermée (recu dans l'espace tuple), l'entry est supprimée, et elle est consignée dans le journal de bord (requete api pour l'enregistrer) faire attention a si la personne est rentrée ou pas
 
-func entry(idPorte int, idBatiment int, idBadge int, ts *Space) {
+func entry(idPorte int, idBatiment int, idBadge int, isInside bool, ts *Space) {
 	var resp *http.Response
 	var err error
 	var wg sync.WaitGroup
@@ -44,7 +44,13 @@ func entry(idPorte int, idBatiment int, idBadge int, ts *Space) {
 	if res == true {
 		go openDoor(idPorte, idBatiment, &WgPorte, ts)
 		//On démarre la detection du laser pour voir si il est passé ou si plus d'une personne est passé !
-		var humanPass = sensor(ts, idBatiment, idPorte)
+		sensor(ts, idBatiment, idPorte)
+		var humanPass bool
+
+		t, _ := ts.Get("Human Pass", idBatiment, idPorte, &humanPass)
+
+		humanPass = (t.GetFieldAt(3)).(bool)
+
 		WgPorte.Wait()
 		if humanPass {
 			// on enregistre l'event !
@@ -54,11 +60,17 @@ func entry(idPorte int, idBatiment int, idBadge int, ts *Space) {
 				body := []byte(`{
 				"idBatiment": ` + strconv.Itoa(idBatiment) + `,
 				"idBadge": ` + strconv.Itoa(idBadge) + `,
-				"goIn": ` + strconv.FormatBool(res) + `
+				"goIn": ` + strconv.FormatBool(!isInside) + `
 			}`)
 				log.Printf("send event")
-				_, err := http.NewRequest("POST", "http://127.0.0.1:8080/api/event/create", bytes.NewBuffer(body))
+				req, err := http.NewRequest("POST", "http://127.0.0.1:8080/api/event/create", bytes.NewBuffer(body))
 				if err != nil {
+					panic(err)
+				}
+
+				req.Header.Set("Content-Type", "application/json")
+				_, err2 := http.DefaultClient.Do(req)
+				if err2 != nil {
 					panic(err)
 				}
 				wg3.Done()
