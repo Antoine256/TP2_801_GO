@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+import . "github.com/pspaces/gospace"
+
 var (
 	upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -30,6 +32,7 @@ func SendToConn(message string) {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	ts := NewSpace("ts")
 	conn, err = upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -45,22 +48,37 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
-		type SM struct {
-			Message    string
-			IdPorte    int
-			IdBatiment int
-			IdBadge    int
-		}
-		var variable SM
-		err = json.Unmarshal(p, &variable)
-		if err != nil {
-			print("error")
-		}
 
+		if strings.Contains(string(p), "Laser detected") {
+			type SM struct {
+				Message    string
+				IdPorte    int
+				IdBatiment int
+			}
+			var variable SM
+			err = json.Unmarshal(p, &variable)
+			if err != nil {
+				print("error")
+			}
+			println("laser detected")
+			ts.Put(variable.Message, variable.IdBatiment, variable.IdPorte)
+		}
 		//si on recois un message de type badge lu on lance une entry
-		if strings.Contains(variable.Message, "Badge Lu") {
+		if strings.Contains(string(p), "Badge Lu") {
+			type SM struct {
+				Message    string
+				IdPorte    int
+				IdBatiment int
+				IdBadge    int
+			}
+
+			var variable SM
+			err = json.Unmarshal(p, &variable)
+			if err != nil {
+				print("error")
+			}
 			//!\ faire la vérification qu'il n'y a pas d'entry en cours pour cette porte !
-			go entry(variable.IdPorte, variable.IdBatiment, variable.IdBadge)
+			go entry(variable.IdPorte, variable.IdBatiment, variable.IdBadge, &ts)
 		}
 
 		log.Printf("Received message: %s", p)

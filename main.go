@@ -14,8 +14,6 @@ func main() {
 	http.HandleFunc("/", global.Handler)
 	fmt.Println("Server listening on :8081")
 
-	//ts := NewSpace("ts")
-
 	wg.Add(1)
 
 	go log.Fatal(http.ListenAndServe(":8081", nil))
