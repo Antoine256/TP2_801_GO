@@ -17,16 +17,12 @@ var (
 			return true
 		},
 	}
-	conn *websocket.Conn
+	conn      *websocket.Conn
+	writeChan = make(chan []byte, 1)
 )
 
 func SendToConn(message string) {
-	if conn != nil {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(message))
-		if err != nil {
-			fmt.Println("Error writing to WebSocket:", err)
-		}
-	}
+	writeChan <- []byte(message)
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -120,4 +116,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func HandleWrites() {
+	println("HandleWrites is running...")
+	for {
+		select {
+		case message := <-writeChan:
+			if conn != nil {
+				err := conn.WriteMessage(websocket.TextMessage, message)
+				if err != nil {
+					fmt.Println("Error writing to WebSocket:", err)
+				}
+			}
+		}
+	}
+	println("HandleWrites is done")
 }
