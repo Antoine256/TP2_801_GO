@@ -2,39 +2,50 @@ package global
 
 import (
 	. "github.com/pspaces/gospace/space"
+	"log"
 	"strconv"
 )
 
-var passTime = 0
+func updatePassTime(ts *Space, batiment int, porte int) {
+	var x int
+	tuple, err := ts.GetP("passTime", batiment, porte, &x)
+	if err == nil {
+		x = (tuple.GetFieldAt(3)).(int)
+	} else {
+		x = 1
+	}
+	ts.Put("passTime", batiment, porte, x)
+}
 
 func sensor(ts *Space, batiment int, porte int) bool {
-	var idPorte int
-	var idBatiment int
-	socket, errLaser := ts.QueryP("Laser detected", &idBatiment, &idPorte)
-	socket1, errdoorClose := ts.QueryP("DoorClose", &idBatiment, &idPorte)
+	var passTime int
+
+	_, errLaser := ts.QueryP("Laser detected", batiment, porte)
+	_, errdoorClose := ts.QueryP("DoorClose", batiment, porte)
+	tuplePassTime, errPassTime := ts.QueryP("passTime", batiment, porte, &passTime)
+
+	if errPassTime == nil {
+		passTime = (tuplePassTime.GetFieldAt(3)).(int)
+	} else {
+		passTime = 0
+	}
 
 	if errLaser == nil {
-		idPorte = (socket.GetFieldAt(2)).(int)
-		idBatiment = (socket.GetFieldAt(1)).(int)
-		if batiment == idBatiment && porte == idPorte {
-			passTime += 1
-			if passTime > 1 {
-				println("Déclenche Alarme")
-				SendToConn("{\"message\": \"Alarme Door\",\"idPorte\": " + strconv.Itoa(porte) + ",\"idBatiment\": " + strconv.Itoa(batiment) + "}")
-			}
-			ts.Get("Laser detected", idBatiment, idPorte)
+		passTime += 1
+		if passTime > 1 {
+			log.Printf("Déclenche Alarme")
+			SendToConn("{\"message\": \"Alarme Door\",\"idPorte\": " + strconv.Itoa(porte) + ",\"idBatiment\": " + strconv.Itoa(batiment) + "}")
 		}
+		updatePassTime(ts, batiment, porte)
+		ts.Get("Laser detected", batiment, porte)
 	}
+
 	if errdoorClose == nil {
-		idPorte = (socket1.GetFieldAt(2)).(int)
-		idBatiment = (socket1.GetFieldAt(1)).(int)
-		if batiment == idBatiment && porte == idPorte {
-			ts.Get("DoorClose", idBatiment, idPorte)
-			var res bool = passTime >= 1
-			passTime = 0
-			ts.Put("Human Pass", idBatiment, idPorte, res)
-			return res
-		}
+		ts.Get("DoorClose", batiment, porte)
+		var res bool = passTime >= 1
+		ts.Put("Human Pass", batiment, porte, res)
+		ts.GetP("passTime", batiment, porte, &passTime)
+		return res
 	}
 
 	return sensor(ts, batiment, porte)
