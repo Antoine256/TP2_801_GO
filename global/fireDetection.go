@@ -12,32 +12,26 @@ import (
 	"time"
 )
 
-func FireDetection(ts *Space, batiments []BatimentType, chanceToFire int) { // Pour la simulation
-	// Générer un indice aléatoire pour sélectionner un bâtiment
-	randomIndex := rand.Intn(len(batiments))
-	batiment := batiments[randomIndex]
-
+func FireDetection(ts *Space, batiment int, chanceToFire int) {
 	var alarmOn bool
 
-	batimentTuple, err := ts.GetP("alarm", batiment.ID, &alarmOn)
+	batimentTuple, err := ts.GetP("alarm", batiment, &alarmOn)
 	if err == nil {
 		alarmOn = (batimentTuple.GetFieldAt(2)).(bool)
 	} else {
 		alarmOn = false
 	}
 
-	println(batiment.ID, alarmOn)
-
-	if rand.Int()*100 > chanceToFire {
-		SendToConn("{\"message\": \"Alarm on\",\"idBatiment\": " + strconv.Itoa(batiment.ID) + "}")
-		ts.Put("alarm", batiment.ID, true)
+	if rand.Int()*100 > chanceToFire { // On simule un incendie
+		SendToConn("{\"message\": \"Alarm on\",\"idBatiment\": " + strconv.Itoa(batiment) + "}")
+		ts.Put("alarm", batiment, true)
 	}
-	if alarmOn && rand.Int()*100 < chanceToFire {
-		SendToConn("{\"message\": \"Alarm off\",\"idBatiment\": " + strconv.Itoa(batiment.ID) + "}")
-		ts.Put("alarm", batiment.ID, false)
+	if alarmOn && rand.Int()*100 < chanceToFire { // On simule la fin d'un incendie
+		SendToConn("{\"message\": \"Alarm off\",\"idBatiment\": " + strconv.Itoa(batiment) + "}")
+		ts.Put("alarm", batiment, false)
 	}
 	time.Sleep(5 * time.Second)
-	FireDetection(ts, batiments, chanceToFire)
+	FireDetection(ts, batiment, chanceToFire)
 }
 
 func AddDetectorOnAllBatiments() {
@@ -72,8 +66,11 @@ func AddDetectorOnAllBatiments() {
 		return
 	}
 
-	wg.Add(1)
-	go FireDetection(&Ts, batiments, 50)
-	wg.Done()
+	wg.Add(len(batiments))
+	for _, batiment := range batiments {
+		log.Print("Processus d'alarme lancé pour le batiment : ", batiment.ID, " ", batiment.Name, "\n")
+		go FireDetection(&Ts, batiment.ID, 50)
+		wg.Done()
+	}
 	wg.Wait()
 }
