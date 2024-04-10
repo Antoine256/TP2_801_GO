@@ -6,10 +6,9 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
-
-import . "github.com/pspaces/gospace"
 
 var (
 	upgrader = websocket.Upgrader{
@@ -32,7 +31,7 @@ func SendToConn(message string) {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	var err error
-	ts := NewSpace("ts")
+	ts := Ts
 	conn, err = upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -79,6 +78,39 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 			//!\ faire la vérification qu'il n'y a pas d'entry en cours pour cette porte !
 			go entry(variable.IdPorte, variable.IdBatiment, variable.IdBadge, variable.IsInside, &ts)
+		}
+
+		//si on recois un message de type alarm, on transmet l'info
+		if strings.Contains(string(p), "Alarm on") {
+			type SM struct {
+				Message    string
+				IdBatiment int
+			}
+
+			var variable SM
+			err = json.Unmarshal(p, &variable)
+			if err != nil {
+				print("error")
+			}
+
+			ts.Put("alarm", variable.IdBatiment, true)
+			SendToConn("{\"message\": \"Alarm on\",\"idBatiment\": " + strconv.Itoa(variable.IdBatiment) + "}")
+		}
+
+		//si on recois un message de type alarm, on transmet l'info
+		if strings.Contains(string(p), "Alarm off") {
+			type SM struct {
+				Message    string
+				IdBatiment int
+			}
+
+			var variable SM
+			err = json.Unmarshal(p, &variable)
+			if err != nil {
+				print("error")
+			}
+			ts.Put("alarm", variable.IdBatiment, false)
+			SendToConn("{\"message\": \"Alarm off\",\"idBatiment\": " + strconv.Itoa(variable.IdBatiment) + "}")
 		}
 
 		log.Printf("Received message: %s", p)

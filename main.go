@@ -11,6 +11,9 @@ import (
 var wg sync.WaitGroup
 
 func main() {
+	global.InitTupleSpace()
+	global.AddDetectorOnAllBatiments()
+
 	http.HandleFunc("/", global.Handler)
 	fmt.Println("Server listening on :8081")
 
